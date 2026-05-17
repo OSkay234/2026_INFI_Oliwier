@@ -1,0 +1,32 @@
+version: 2.1
+
+jobs:
+  build-and-test:
+    docker:
+      - image: cimg/python:3.11
+    steps:
+      - checkout
+      - run:
+          name: deps
+          command: pip install -r requirements.txt
+      - run:
+          name: lint
+          command: flake8 main.py test_main.py
+      - run:
+          name: test
+          command: pytest test_main.py
+      - setup_remote_docker:
+          version: default
+      - run:
+          name: docker_build
+          command: docker build -t scanfiloskay/2026-infi-oliwier:latest .
+      - run:
+          name: docker_push
+          command: |
+            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+            docker push scanfiloskay/2026-infi-oliwier:latest
+
+workflows:
+  build-and-test:
+    jobs:
+      - build-and-test
